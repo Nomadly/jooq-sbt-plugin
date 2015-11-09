@@ -1,7 +1,7 @@
 This is an SBT plugin that provides an interface to the JOOQ code generation tool
 (<http://www.jooq.org>). The plugin is compatible with SBT 0.11.3+ and Scala 2.9.1+.
 
-The current version of the plugin is *1.5*
+The current version of the plugin is *1.6*
 
 
 Quick Start
@@ -61,7 +61,22 @@ The plugin exposes several settings:
 
             jooqConfigFile := Some(new java.io.File("/path/to/your/file")
 
-   This will override the `jooq-options` setting if present. 
+   This will override the `jooq-options` setting if present. This file now allows for users to pass templatable values using the Java Minimal Template Engine. Refer to <https://code.google.com/p/jmte/> for a complete description of how to use JMTE. 
+   
+* *jooq-config-template-values*: an `Option[()=>Map[String, AnyRef]]` that allows you to supply a specify a map of string keys and corresponding values to be sustituted into a specified jooqConfigFile. Set it like this:
+
+```scala
+jooqConfigTemplateValues := Some(() => {
+  val envFile = baseDirectory.value / ".env"
+  if (envFile.isFile){
+    IO.load(System.getProperties, envFile)
+  }
+
+  val conf = ConfigFactory.parseFile(new File("conf/development.conf")).resolve()
+
+  JavaConversions.mapAsScalaMap(conf.getObject("db.default").unwrapped()).toMap
+})
+```
 
 * *jooq-output-directory* (`jooqOutputDirectory` in build.sbt): a `File`
   indicating where JOOQ should deposit the source files it generates. By
@@ -157,3 +172,4 @@ History
 * 1.3: Changed default JOOQ version to 3.2.1 (previous default was 2.6.1)
 * 1.4: Changed default JOOQ version to 3.3.1 (previous default was 3.2.1)
 * 1.5: Added `jooqConfigFile` option to allow for handcrafted JOOQ configurations beyond what can be specified in `jooqOptions`
+* 1.6: Merged pull request #14 to support templatization of JOOQ config files -- thanks to [triplec1988](https://github.com/triplec1988) for this enhancement!
